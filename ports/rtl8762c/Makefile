@@ -75,5 +75,14 @@ $(BUILD)/firmware.elf: $(OBJ)
 	$(Q)$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 	$(Q)$(SIZE) $@
 
+# Run emulation build on a POSIX system with suitable terminal settings
+run: $(BUILD)/firmware.elf
+	@saved_=`stty -g`; \
+	  stty raw opost -echo; \
+	  $<; \
+	  echo "Exit status: $$?"; \
+	  stty $$saved_
+.PHONY: run
+
 # Include remaining core make rules.
 include $(TOP)/py/mkrules.mk
