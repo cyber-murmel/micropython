@@ -8,6 +8,16 @@ MICROPY_ROM_TEXT_COMPRESSION ?= 1
 include $(TOP)/py/py.mk
 include $(TOP)/extmod/extmod.mk
 
+BOARD ?= EMB1082
+BOARD_DIR ?= boards/$(BOARD)
+
+ifeq ($(wildcard $(BOARD_DIR)/.),)
+$(error Invalid BOARD specified: $(BOARD))
+endif
+
+# Include board specific definitions.
+include $(BOARD_DIR)/board_config.mk
+
 ifeq ($(CROSS), 1)
 CROSS_COMPILE ?= arm-none-eabi-
 endif
@@ -26,15 +36,19 @@ INC += $(addprefix -I,$(sort \
 ))
 
 # Set CFLAGS and libraries.
-CFLAGS += $(INC) -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=gnu17 $(COPT)
+CFLAGS += $(INC) -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=gnu17 $(COPT) -DFIRMWARE_SIZE=$(FIRMWARE_SIZE)
 LIBS = -lc -lm
 
 ifeq ($(CROSS), 1)
 CFLAGS += -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -fsingle-precision-constant
-LDFLAGS += -specs=nano.specs -T rtl8762c.ld -Wl,-Map=$@.map,--cref -Wl,--gc-sections $(CFLAGS)
+LDFLAGS += -specs=nano.specs -T rtl8762c.ld -Wl,-Map=$@.map,--cref -Wl,--gc-sections -Wl,--defsym=FIRMWARE_SIZE=$(FIRMWARE_SIZE) $(CFLAGS)
 LIBS += -lnosys sdk/bin/rom_symbol_gcc.axf $(wildcard ./sdk/bin/*.a)
 SRC_S = sdk/src/mcu/rtl876x/arm/startup_rtl8762c_gcc.s
-SRC_C = sdk/src/mcu/rtl876x/system_rtl8762c.c
+SRC_C = \
+	sdk/src/mcu/rtl876x/system_rtl8762c.c \
+	sdk/src/mcu/peripheral/rtl876x_rcc.c \
+	sdk/src/mcu/peripheral/rtl876x_uart.c \
+	uart.c
 else
 LD = $(CC)
 LDFLAGS += -Wl,-Map=$@.map,--cref -Wl,--gc-sections
@@ -67,7 +81,8 @@ OBJ = \
 	)
 
 # Define the top-level target, the main firmware.
-all: $(BUILD)/firmware.elf
+all: $(BUILD)/firmware.elf $(BUILD)/firmware.bin $(BUILD)/oem_config.bin $(BUILD)/ota_bank0_header.bin
+.PHONY: all
 
 # Define how to build the firmware.
 $(BUILD)/firmware.elf: $(OBJ)
@@ -75,6 +90,25 @@ $(BUILD)/firmware.elf: $(OBJ)
 	$(Q)$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 	$(Q)$(SIZE) $@
 
+$(BUILD)/firmware.bin: $(BUILD)/firmware.elf
+	$(Q)$(OBJCOPY) --output-target=binary -R App.trace $^ $@
+
+$(BUILD)/oem_config.o: config/oem_config.c | $(BUILD)
+	$(Q)$(CC) -c -Wno-override-init $(CFLAGS) $< -o $@
+
+$(BUILD)/oem_config.bin: $(BUILD)/oem_config.o
+	$(Q)$(OBJCOPY) --output-target=binary $< $@
+	$(Q)$(PYTHON) tools/crc_patch.py $@
+
+$(BUILD)/ota_bank0_header.o: config/ota_bank0_header.c | $(BUILD)
+	$(Q)$(CC) -c -Wno-override-init $(CFLAGS) $< -o $@
+
+$(BUILD)/ota_bank0_header.bin: $(BUILD)/ota_bank0_header.o
+	$(Q)$(OBJCOPY) --output-target=binary $< $@
+	$(Q)$(PYTHON) tools/crc_patch.py $@
+
+$(BUILD):
+	$(MKDIR) -p $@
 # Run emulation build on a POSIX system with suitable terminal settings
 run: $(BUILD)/firmware.elf
 	@saved_=`stty -g`; \
