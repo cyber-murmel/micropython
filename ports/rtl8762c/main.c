@@ -7,6 +7,7 @@
 #include "shared/runtime/pyexec.h"
 
 #include "uart.h"
+#include "modmachine.h"
 
 // Allocate memory for the MicroPython GC heap.
 static char heap[4096];
@@ -18,6 +19,9 @@ int main(int argc, char **argv) {
     mp_stack_ctrl_init();
     gc_init(heap, heap + sizeof(heap));
     mp_init();
+
+    // initialise peripherals
+    machine_pins_init();
 
     // Start a normal REPL; will exit when ctrl-D is entered on a blank line.
     pyexec_friendly_repl();

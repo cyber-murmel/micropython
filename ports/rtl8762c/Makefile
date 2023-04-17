@@ -59,9 +59,11 @@ SRC_C += \
 	sdk/src/mcu/rtl876x/system_rtl8762c.c \
 	sdk/src/mcu/peripheral/rtl876x_rcc.c \
 	sdk/src/mcu/peripheral/rtl876x_uart.c \
+	sdk/src/mcu/peripheral/rtl876x_gpio.c \
 
 SRC_MOD += \
 	modmachine.c \
+	machine_pin.c \
 
 SRC_C += $(SRC_MOD)
 
