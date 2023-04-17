@@ -63,6 +63,7 @@ SRC_C += \
 
 SRC_MOD += \
 	modmachine.c \
+	modutime.c \
 	machine_pin.c \
 
 SRC_C += $(SRC_MOD)
@@ -74,7 +75,7 @@ SRC_QSTR += \
 
 # Define the required object files.
 OBJ = \
-	$(PY_CORE_O) \
+	$(PY_O) \
 	$(addprefix $(BUILD)/, \
 		$(SRC_S:.s=.o) \
 		$(SRC_C:.c=.o) \
