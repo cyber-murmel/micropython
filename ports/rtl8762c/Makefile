@@ -71,7 +71,15 @@ SRC_C += \
 	shared/runtime/pyexec.c \
 	shared/runtime/stdout_helpers.c \
 
-SRC_QSTR += shared/readline/readline.c shared/runtime/pyexec.c
+SRC_MOD += \
+	modmachine.c \
+
+SRC_C += $(SRC_MOD)
+
+SRC_QSTR += \
+	$(SRC_MOD) \
+	shared/readline/readline.c \
+	shared/runtime/pyexec.c
 
 # Define the required object files.
 OBJ = \
