@@ -7,7 +7,6 @@ MICROPY_ROM_TEXT_COMPRESSION ?= 1
 # Include py core make definitions.
 include $(TOP)/py/py.mk
 include $(TOP)/extmod/extmod.mk
-
 RTLTOOL ?= ~/repos/rtltool/rtltool.py
 BOARD ?= EMB1082
 BOARD_DIR ?= boards/$(BOARD)
@@ -19,9 +18,7 @@ endif
 # Include board specific definitions.
 include $(BOARD_DIR)/board_config.mk
 
-ifeq ($(CROSS), 1)
 CROSS_COMPILE ?= arm-none-eabi-
-endif
 
 INC += -I.
 INC += -I$(TOP)
@@ -38,22 +35,10 @@ INC += $(addprefix -I,$(sort \
 
 # Set CFLAGS and libraries.
 CFLAGS += $(INC) -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=gnu17 $(COPT) -DFIRMWARE_SIZE=$(FIRMWARE_SIZE)
-LIBS = -lc -lm
-
-ifeq ($(CROSS), 1)
 CFLAGS += -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -fsingle-precision-constant
 LDFLAGS += -specs=nano.specs -T rtl8762c.ld -Wl,-Map=$@.map,--cref -Wl,--gc-sections -Wl,--defsym=FIRMWARE_SIZE=$(FIRMWARE_SIZE) $(CFLAGS)
-LIBS += -lnosys sdk/bin/rom_symbol_gcc.axf $(wildcard ./sdk/bin/*.a)
+LIBS += -lc -lm -lnosys sdk/bin/rom_symbol_gcc.axf $(wildcard ./sdk/bin/*.a)
 SRC_S = sdk/src/mcu/rtl876x/arm/startup_rtl8762c_gcc.s
-SRC_C = \
-	sdk/src/mcu/rtl876x/system_rtl8762c.c \
-	sdk/src/mcu/peripheral/rtl876x_rcc.c \
-	sdk/src/mcu/peripheral/rtl876x_uart.c \
-	uart.c
-else
-LD = $(CC)
-LDFLAGS += -Wl,-Map=$@.map,--cref -Wl,--gc-sections
-endif
 
 # Tune for Debugging or Optimization
 ifeq ($(DEBUG), 1)
@@ -65,11 +50,15 @@ endif
 # Define the required source files.
 SRC_C += \
 	main.c \
+	uart.c \
 	mphalport.c \
 	shared/readline/readline.c \
 	shared/runtime/gchelper_generic.c \
 	shared/runtime/pyexec.c \
 	shared/runtime/stdout_helpers.c \
+	sdk/src/mcu/rtl876x/system_rtl8762c.c \
+	sdk/src/mcu/peripheral/rtl876x_rcc.c \
+	sdk/src/mcu/peripheral/rtl876x_uart.c \
 
 SRC_MOD += \
 	modmachine.c \
