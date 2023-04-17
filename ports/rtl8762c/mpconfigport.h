@@ -19,6 +19,9 @@
 #define MICROPY_PY_IO                           (0)
 #define MICROPY_PY_STRUCT                       (0)
 
+// extended modules
+#define MICROPY_PY_MACHINE          (1)
+
 // Type definitions for the specific machine.
 
 typedef intptr_t mp_int_t; // must be pointer size
