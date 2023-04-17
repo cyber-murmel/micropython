@@ -1,0 +1,3 @@
+FIRMWARE_SIZE = 0x00032000 # 200 kiB
+
+PORT ?= /dev/ttyACM0

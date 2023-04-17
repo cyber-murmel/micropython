@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdbool.h>
 
 // Python internal features.
 #define MICROPY_ENABLE_GC                       (1)
@@ -23,6 +24,12 @@
 typedef intptr_t mp_int_t; // must be pointer size
 typedef uintptr_t mp_uint_t; // must be pointer size
 typedef long mp_off_t;
+
+#define MICROPY_EVENT_POLL_HOOK \
+    do { \
+        extern void mp_handle_pending(bool); \
+        mp_handle_pending(true); \
+    } while (0);
 
 // We need to provide a declaration/definition of alloca().
 #include <alloca.h>
