@@ -138,14 +138,9 @@ debug: $(BUILD)/firmware.elf
 		-ex 'monitor halt'
 .PHONY: debug
 
-# Run emulation build on a POSIX system with suitable terminal settings
-run: $(BUILD)/firmware.elf
-	@saved_=`stty -g`; \
-	  stty raw opost -echo; \
-	  $<; \
-	  echo "Exit status: $$?"; \
-	  stty $$saved_
-.PHONY: run
+term:
+	$(Q)$(PYTHON) -m serial.tools.miniterm --raw --exit-char 24 --rts 0 $(PORT) 115200
+.PHONY: term
 
 # Include remaining core make rules.
 include $(TOP)/py/mkrules.mk
