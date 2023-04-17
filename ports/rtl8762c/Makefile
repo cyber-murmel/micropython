@@ -126,6 +126,18 @@ erase:
 	$(ECHO) "Erasing firmware"
 	$(Q)$(PYTHON) $(RTLTOOL) --port $(PORT) erase_region 0x0080E000 $(FIRMWARE_SIZE)
 .PHONY: erase
+
+debug: $(BUILD)/firmware.elf
+	$(Q)$(GDB) $< \
+		$(addprefix --directory ,$(DIRS)) \
+		-ex "target extended-remote | openocd -c 'log_output openocd.log' \
+			-f interface/cmsis-dap.cfg \
+			-c 'transport select swd' \
+			-f debug/rtl8762c.cfg \
+			-f debug/gdb.cfg" \
+		-ex 'monitor halt'
+.PHONY: debug
+
 # Run emulation build on a POSIX system with suitable terminal settings
 run: $(BUILD)/firmware.elf
 	@saved_=`stty -g`; \
