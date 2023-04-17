@@ -1,1 +1,7 @@
+# Debugging log
+openocd.log
+
+# Vendor files
 sdk/
+fsbl_MP_*.bin
+Patch_MP_*.bin
