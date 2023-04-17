@@ -12,11 +12,12 @@
 static char heap[4096];
 
 int main(int argc, char **argv) {
+    uart_init();
+
     // Initialise the MicroPython runtime.
     mp_stack_ctrl_init();
     gc_init(heap, heap + sizeof(heap));
     mp_init();
-    uart_init();
 
     // Start a normal REPL; will exit when ctrl-D is entered on a blank line.
     pyexec_friendly_repl();
