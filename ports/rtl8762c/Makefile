@@ -8,6 +8,7 @@ MICROPY_ROM_TEXT_COMPRESSION ?= 1
 include $(TOP)/py/py.mk
 include $(TOP)/extmod/extmod.mk
 
+RTLTOOL ?= ~/repos/rtltool/rtltool.py
 BOARD ?= EMB1082
 BOARD_DIR ?= boards/$(BOARD)
 
@@ -109,6 +110,22 @@ $(BUILD)/ota_bank0_header.bin: $(BUILD)/ota_bank0_header.o
 
 $(BUILD):
 	$(MKDIR) -p $@
+
+# Include image creation rules.
+include mkimage.mk
+
+deploy: $(BUILD)/oem_config.bin $(BUILD)/ota_bank0_header.bin $(BUILD)/firmware.bin
+	$(ECHO) "Writing $^ to the board"
+	$(Q)$(PYTHON) $(RTLTOOL) --port $(PORT) write_flash \
+		0x00801000 $(BUILD)/oem_config.bin \
+		0x00802000 $(BUILD)/ota_bank0_header.bin \
+		0x0080E000 $(BUILD)/firmware.bin
+.PHONY: deploy
+
+erase:
+	$(ECHO) "Erasing firmware"
+	$(Q)$(PYTHON) $(RTLTOOL) --port $(PORT) erase_region 0x0080E000 $(FIRMWARE_SIZE)
+.PHONY: erase
 # Run emulation build on a POSIX system with suitable terminal settings
 run: $(BUILD)/firmware.elf
 	@saved_=`stty -g`; \
