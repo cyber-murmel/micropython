@@ -3,7 +3,7 @@
 
 #include "py/obj.h"
 
-extern const mp_obj_type_t machine_pin_type;
+// extern const mp_obj_type_t pin_type;
 
 void machine_pins_init(void);
 void machine_pins_deinit(void);

@@ -21,6 +21,9 @@ include $(BOARD_DIR)/board_config.mk
 CROSS_COMPILE ?= arm-none-eabi-
 
 INC += -I.
+INC += -Imp_helper
+INC += -Imp_helper/mods
+INC += -Imp_helper/mods/machine
 INC += -I$(TOP)
 INC += -I$(BUILD)
 INC += -Iconfig
@@ -60,18 +63,20 @@ SRC_C += \
 	sdk/src/mcu/peripheral/rtl876x_rcc.c \
 	sdk/src/mcu/peripheral/rtl876x_uart.c \
 	sdk/src/mcu/peripheral/rtl876x_gpio.c \
+	$(BOARD_DIR)/pins.c \
 
 SRC_MOD += \
-	modmachine.c \
-	modutime.c \
-	machine_pin.c \
+	mp_helper/mods/modmachine.c \
+	mp_helper/mods/modutime.c \
+	mp_helper/mods/machine/objpin.c \
 
 SRC_C += $(SRC_MOD)
 
 SRC_QSTR += \
 	$(SRC_MOD) \
 	shared/readline/readline.c \
-	shared/runtime/pyexec.c
+	shared/runtime/pyexec.c \
+	$(BOARD_DIR)/pins.c \
 
 # Define the required object files.
 OBJ = \
