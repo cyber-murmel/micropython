@@ -26,6 +26,7 @@ INC += -Imp_helper/mods
 INC += -Imp_helper/mods/machine
 INC += -I$(TOP)
 INC += -I$(BUILD)
+INC += -I$(BOARD_DIR)
 INC += -Iconfig
 INC += $(addprefix -I,$(sort \
 	sdk/inc/ \

@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdbool.h>
+#include "mpconfigboard.h"
 
 // Python internal features.
 #define MICROPY_ENABLE_GC                       (1)
@@ -38,9 +39,5 @@ typedef long mp_off_t;
 
 // We need to provide a declaration/definition of alloca().
 #include <alloca.h>
-
-// Define the port's name and hardware.
-#define MICROPY_HW_BOARD_NAME "example-board"
-#define MICROPY_HW_MCU_NAME   "unknown-cpu"
 
 #define MP_STATE_PORT MP_STATE_VM

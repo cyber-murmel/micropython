@@ -38,13 +38,16 @@ typedef struct {
 #define IRQn_hlp(PAD) GPIO##PAD##_IRQn
 #define IRQn(PAD) IRQn_hlp(PAD)
 
+// Some pads use the same GPIO register bit.
+// This should only be relevant regarding input,
+// since output can be accomplished with SW mode.
 #define GPIO_BIT_hlp(PAD)   (PAD<=P3_6) ? BIT(PAD) : \
                         ((PAD <= P4_3) && (PAD >= P4_0)) ? BIT(PAD - 4) : \
                         ((PAD == H_0) || (PAD == H_1) || (PAD == H_2)) ? BIT(PAD - 11) : \
                         0xff
 #define GPIO_BIT(PAD) GPIO_BIT_hlp(PAD)
 
-// Some pads reuse other pads' gpio interrupt, since there may be more pads than gpios.
+// Some pads reuse other pads' gpio interrupt.
 // For this reason there is a `p_pad_irq` parameter.
 #define PIN(p_name, p_pad, p_pad_irq, p_pull, p_mode, p_value) ((pin_obj_t){ \
     {&pin_type}, \
@@ -59,7 +62,7 @@ typedef struct {
 
 #define BOARD_PIN_hlp(p_name, p_pad, p_pad_irq) ((mp_map_elem_t) { \
     MP_OBJ_NEW_QSTR(p_name), \
-    MP_OBJ_FROM_PTR(&PIN(p_name, p_pad, p_pad_irq, PAD_PULL_NONE, PAD_OUT_ENABLE, 0)) \
+    MP_OBJ_FROM_PTR(&PIN(p_name, p_pad, p_pad_irq, PAD_PULL_NONE, PAD_OUT_DISABLE, 0)) \
 })
 #define BOARD_PIN_REUSE_IRQ(p_pad, p_pad_irq) BOARD_PIN_hlp(MP_QSTR_ ## p_pad, p_pad, p_pad_irq)
 #define BOARD_PIN(p_pad) BOARD_PIN_hlp(MP_QSTR_ ## p_pad, p_pad, p_pad)

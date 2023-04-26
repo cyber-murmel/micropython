@@ -1,3 +1,29 @@
+/*
+ * This file is part of the Micro Python project, http://micropython.org/
+ *
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2023 Markus "marble" Blechschmidt
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
 #include <stdio.h>
 #include <string.h>
 
@@ -49,33 +75,55 @@ void machine_pins_deinit(void) {
 
 // pin.init(mode, pull=None, *, value)
 STATIC mp_obj_t pin_obj_init_helper(pin_obj_t *self, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    enum { ARG_mode, ARG_pull, ARG_sw_mode, ARG_value };
+    enum { ARG_mode, ARG_pull, ARG_value, ARG_sw_mode };
     static const mp_arg_t pin_init_args[] = {
         { MP_QSTR_mode, MP_ARG_INT, {.u_int = PAD_OUT_DISABLE}},
-        { MP_QSTR_pull, MP_ARG_INT, {.u_int = PAD_PULL_NONE}},
-        { MP_QSTR_sw_mode, MP_ARG_BOOL, {.u_bool = false}},
-        { MP_QSTR_value, MP_ARG_KW_ONLY | MP_ARG_BOOL, {.u_bool = false}},
+        { MP_QSTR_pull, MP_ARG_OBJ, {.u_obj = mp_const_none}},
+        { MP_QSTR_value, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL}},
+        { MP_QSTR_sw_mode, MP_ARG_KW_ONLY | MP_ARG_BOOL, {.u_bool = false}},
     };
 
     // parse args
     mp_arg_val_t args[MP_ARRAY_SIZE(pin_init_args)];
     mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(pin_init_args), pin_init_args, args);
 
+    // get the io mode, default is input
+    uint mode = args[ARG_mode].u_int;
     self->sw_mode = args[ARG_sw_mode].u_bool;
 
-    // configure the pin for gpio, and pull
+    // get the pull type, default is pull none
+    uint pull = PAD_PULL_NONE;
+    if (args[ARG_pull].u_obj != mp_const_none) {
+        pull = mp_obj_get_int(args[ARG_pull].u_obj);
+    }
+
+    // get the value, default is 0
+    int value = 0;
+    if (args[ARG_value].u_obj != MP_OBJ_NULL) {
+        if (mp_obj_is_true(args[ARG_value].u_obj)) {
+            value = 1;
+        }
+    }
+
+    // config the pin object
+    self->mode  = mode;
+    self->pull = pull;
+
+    // config pin hardware
+
+    //// configure the pin for gpio, and pull
     PAD_Mode pad_mode = args[ARG_sw_mode].u_bool
         ? PAD_SW_MODE
         : PAD_PINMUX_MODE;
     PAD_Pull_Mode pull_mode = args[ARG_pull].u_int;
     PAD_OUTPUT_ENABLE_Mode output_enable = args[ARG_mode].u_int;
-    PAD_OUTPUT_VAL sw_mode_val = args[ARG_value].u_bool
+    PAD_OUTPUT_VAL sw_mode_val = value
         ? PAD_OUT_HIGH
         : PAD_OUT_LOW;
 
     Pad_Config(self->id, pad_mode, PAD_IS_PWRON, pull_mode, output_enable, sw_mode_val);
 
-    // configure mode
+    //// configure mode
     if (!self->sw_mode) {
         uint32_t gpioBit = self->gpio_bit;
         GPIOMode_TypeDef direction = (PAD_OUT_DISABLE == output_enable) ? GPIO_Mode_IN : GPIO_Mode_OUT;
@@ -85,7 +133,7 @@ STATIC mp_obj_t pin_obj_init_helper(pin_obj_t *self, size_t n_args, const mp_obj
         GPIO_InitStruct.GPIO_Pin = gpioBit;
         GPIO_InitStruct.GPIO_Mode = direction;
         GPIO_Init(&GPIO_InitStruct);
-        GPIO_WriteBit(gpioBit, args[ARG_value].u_bool);
+        GPIO_WriteBit(gpioBit, value);
         Pinmux_Config(self->id, DWGPIO);
     }
 
