@@ -1,5 +1,9 @@
 #include <stdint.h>
 #include <stdbool.h>
+
+#include "FreeRTOS/FreeRTOS.h"
+#include "FreeRTOS/task.h"
+
 #include "mpconfigboard.h"
 
 // Python internal features.
@@ -21,21 +25,27 @@
 #define MICROPY_PY_STRUCT                       (0)
 #define MICROPY_PY_UTIME_MP_HAL                 (1)
 
-
 // extended modules
 #define MICROPY_PY_MACHINE          (1)
-
-// Type definitions for the specific machine.
-
-typedef intptr_t mp_int_t; // must be pointer size
-typedef uintptr_t mp_uint_t; // must be pointer size
-typedef long mp_off_t;
 
 #define MICROPY_EVENT_POLL_HOOK \
     do { \
         extern void mp_handle_pending(bool); \
         mp_handle_pending(true); \
     } while (0);
+
+// Heap size for Garbage Collector
+#define MP_HEAP_SIZE                        (16 * 1024)
+
+#define MICROPY_TASK_NAME                   "MicroPython"
+#define MICROPY_TASK_STACK_DEPTH            (((20 * 1024) + 512) / sizeof(StackType_t))
+#define MICROPY_TASK_PRIORITY               (tskIDLE_PRIORITY+1)
+
+// Type definitions for the specific machine.
+
+typedef intptr_t mp_int_t; // must be pointer size
+typedef uintptr_t mp_uint_t; // must be pointer size
+typedef long mp_off_t;
 
 // We need to provide a declaration/definition of alloca().
 #include <alloca.h>

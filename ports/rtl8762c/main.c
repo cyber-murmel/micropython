@@ -6,14 +6,23 @@
 #include "shared/runtime/gchelper.h"
 #include "shared/runtime/pyexec.h"
 
+#include "os/os_sched.h"
+#include "os/os_task.h"
+#include "FreeRTOS/FreeRTOS.h"
+
 #include "uart.h"
 #include "modmachine.h"
+#include "mphalport.h"
+
+void *mp_main_task_handle;
 
 // Allocate memory for the MicroPython GC heap.
-static char heap[4096];
+static char heap[MP_HEAP_SIZE];
 
-int main(int argc, char **argv) {
+static void micropython_task(void *p_param) {
     uart_init();
+
+    uart_tx_strn("Hello\r\n", 7);
 
     // Initialise the MicroPython runtime.
     mp_stack_ctrl_init();
@@ -29,7 +38,22 @@ int main(int argc, char **argv) {
     // Deinitialise the runtime.
     gc_sweep_all();
     mp_deinit();
-    return 0;
+}
+
+int main(int argc, char **argv) {
+    (void) argc;
+    (void) argv;
+
+    os_task_create(\
+        &mp_main_task_handle, \
+        MICROPY_TASK_NAME, \
+        micropython_task, \
+        0, \
+        MICROPY_TASK_STACK_DEPTH, \
+        MICROPY_TASK_PRIORITY);
+    os_sched_start();
+
+    return 1;
 }
 
 // Handle uncaught exceptions (should never be reached in a correct C implementation).
