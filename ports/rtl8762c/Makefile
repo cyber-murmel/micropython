@@ -67,8 +67,6 @@ SRC_C += \
 	$(BOARD_DIR)/pins.c \
 
 SRC_MOD += \
-	mp_helper/mods/modmachine.c \
-	mp_helper/mods/modutime.c \
 	mp_helper/mods/machine/objpin.c \
 
 SRC_C += $(SRC_MOD)

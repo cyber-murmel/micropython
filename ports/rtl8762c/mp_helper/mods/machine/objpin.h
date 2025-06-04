@@ -50,7 +50,7 @@ typedef struct {
 // Some pads reuse other pads' gpio interrupt.
 // For this reason there is a `p_pad_irq` parameter.
 #define PIN(p_name, p_pad, p_pad_irq, p_pull, p_mode, p_value) ((pin_obj_t){ \
-    {&pin_type}, \
+    {&pyb_pin_type}, \
     .name       = p_name, \
     .id         = p_pad, \
     .gpio_bit   = GPIO_BIT(p_pad), \
@@ -67,7 +67,7 @@ typedef struct {
 #define BOARD_PIN_REUSE_IRQ(p_pad, p_pad_irq) BOARD_PIN_hlp(MP_QSTR_ ## p_pad, p_pad, p_pad_irq)
 #define BOARD_PIN(p_pad) BOARD_PIN_hlp(MP_QSTR_ ## p_pad, p_pad, p_pad)
 
-extern const mp_obj_type_t pin_type;
+extern const mp_obj_type_t pyb_pin_type;
 extern const mp_obj_dict_t pin_board_pins_locals_dict;
 
 #endif  // OBJPIN_H_

@@ -38,7 +38,7 @@
 #include "peripheral/rtl876x_gpio.h"
 #include "peripheral/rtl876x_nvic.h"
 
-STATIC pin_obj_t *pin_find_named_pin(const mp_obj_dict_t *named_pins, mp_obj_t name) {
+static pin_obj_t *pin_find_named_pin(const mp_obj_dict_t *named_pins, mp_obj_t name) {
     mp_map_t *named_map = mp_obj_dict_get_map((mp_obj_t)named_pins);
     mp_map_elem_t *named_elem = mp_map_lookup(named_map, name, MP_MAP_LOOKUP);
     if (named_elem != NULL && named_elem->value != NULL) {
@@ -51,7 +51,7 @@ pin_obj_t *pin_find(mp_obj_t user_obj) {
     pin_obj_t *pin_obj;
 
     // if a pin was provided, use it
-    if (MP_OBJ_IS_TYPE(user_obj, &pin_type)) {
+    if (MP_OBJ_IS_TYPE(user_obj, &pyb_pin_type)) {
         pin_obj = user_obj;
         return pin_obj;
     }
@@ -74,7 +74,7 @@ void machine_pins_deinit(void) {
 }
 
 // pin.init(mode, pull=None, *, value)
-STATIC mp_obj_t pin_obj_init_helper(pin_obj_t *self, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t pin_obj_init_helper(pin_obj_t *self, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     enum { ARG_mode, ARG_pull, ARG_value, ARG_sw_mode };
     static const mp_arg_t pin_init_args[] = {
         { MP_QSTR_mode, MP_ARG_INT, {.u_int = PAD_OUT_DISABLE}},
@@ -140,7 +140,7 @@ STATIC mp_obj_t pin_obj_init_helper(pin_obj_t *self, size_t n_args, const mp_obj
     return mp_const_none;
 }
 
-STATIC void pin_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
+static void pin_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
     pin_obj_t *self = self_in;
     qstr mode_qstr = MP_QSTR_OUT;
     qstr pull_qstr = PAD_PULL_NONE;
@@ -166,7 +166,7 @@ STATIC void pin_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t
 }
 
 // constructor(id, ...)
-STATIC mp_obj_t pin_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t pin_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     mp_arg_check_num(n_args, n_kw, 1, MP_OBJ_FUN_ARGS_MAX, true);
 
     // Run an argument through the mapper and return the result.
@@ -180,7 +180,7 @@ STATIC mp_obj_t pin_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_
 }
 
 // fast method for getting/setting pin value
-STATIC mp_obj_t pin_call(mp_obj_t self_in, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t pin_call(mp_obj_t self_in, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     mp_arg_check_num(n_args, n_kw, 0, 1, false);
     const pin_obj_t *self = self_in;
     uint32_t gpioBit = self->gpio_bit;
@@ -205,34 +205,34 @@ STATIC mp_obj_t pin_call(mp_obj_t self_in, size_t n_args, size_t n_kw, const mp_
 }
 
 // pin.init(mode, pull)
-STATIC mp_obj_t pin_obj_init(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
+static mp_obj_t pin_obj_init(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {
     return pin_obj_init_helper(args[0], n_args - 1, args + 1, kw_args);
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(pin_init_obj, 1, pin_obj_init);
 
 // pin.value([value])
-STATIC mp_obj_t pin_value(size_t n_args, const mp_obj_t *args) {
+static mp_obj_t pin_value(size_t n_args, const mp_obj_t *args) {
     return pin_call(args[0], n_args - 1, 0, args + 1);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pin_value_obj, 1, 2, pin_value);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pin_value_obj, 1, 2, pin_value);
 
 // pin.off()
-STATIC mp_obj_t pin_off(mp_obj_t self_in) {
+static mp_obj_t pin_off(mp_obj_t self_in) {
     pin_obj_t *self = MP_OBJ_TO_PTR(self_in);
     uint32_t gpioBit = self->gpio_bit;
     GPIO_WriteBit(gpioBit, 0);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_off_obj, pin_off);
+static MP_DEFINE_CONST_FUN_OBJ_1(pin_off_obj, pin_off);
 
 // pin.on()
-STATIC mp_obj_t pin_on(mp_obj_t self_in) {
+static mp_obj_t pin_on(mp_obj_t self_in) {
     pin_obj_t *self = MP_OBJ_TO_PTR(self_in);
     uint32_t gpioBit = self->gpio_bit;
     GPIO_WriteBit(gpioBit, 1);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pin_on_obj, pin_on);
+static MP_DEFINE_CONST_FUN_OBJ_1(pin_on_obj, pin_on);
 
 MP_DEFINE_CONST_OBJ_TYPE(
     pin_board_pins_obj_type,
@@ -245,7 +245,7 @@ MP_DEFINE_CONST_OBJ_TYPE(
     locals_dict, &pin_board_pins_locals_dict
     );
 
-STATIC const mp_rom_map_elem_t pin_locals_dict_table[] = {
+static const mp_rom_map_elem_t pin_locals_dict_table[] = {
     // instance methods
     { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&pin_init_obj) },
     { MP_ROM_QSTR(MP_QSTR_value), MP_ROM_PTR(&pin_value_obj) },
@@ -263,10 +263,10 @@ STATIC const mp_rom_map_elem_t pin_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_PULL_NONE), MP_ROM_INT(PAD_PULL_NONE) },
 };
 
-STATIC MP_DEFINE_CONST_DICT(pin_locals_dict, pin_locals_dict_table);
+static MP_DEFINE_CONST_DICT(pin_locals_dict, pin_locals_dict_table);
 
 MP_DEFINE_CONST_OBJ_TYPE(
-    pin_type,
+    pyb_pin_type,
     MP_QSTR_Pin,
     MP_TYPE_FLAG_NONE,
     make_new, pin_make_new,

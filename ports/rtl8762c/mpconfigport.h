@@ -12,21 +12,12 @@
 #define MICROPY_ERROR_REPORTING                 (MICROPY_ERROR_REPORTING_TERSE)
 #define MICROPY_FLOAT_IMPL                      (MICROPY_FLOAT_IMPL_FLOAT)
 
-// Enable u-modules to be imported with their standard name, like sys.
-#define MICROPY_MODULE_WEAK_LINKS               (1)
-
 // Fine control over Python builtins, classes, modules, etc.
-#define MICROPY_PY_ASYNC_AWAIT                  (0)
-#define MICROPY_PY_BUILTINS_SET                 (0)
-#define MICROPY_PY_ATTRTUPLE                    (0)
-#define MICROPY_PY_COLLECTIONS                  (0)
-#define MICROPY_PY_MATH                         (0)
-#define MICROPY_PY_IO                           (0)
-#define MICROPY_PY_STRUCT                       (0)
-#define MICROPY_PY_UTIME_MP_HAL                 (1)
+#define MICROPY_PY_TIME (1)
 
 // extended modules
 #define MICROPY_PY_MACHINE          (1)
+#define MICROPY_PY_MACHINE_INCLUDEFILE "ports/rtl8762c/mp_helper/mods/modmachine.c"
 
 #define MICROPY_EVENT_POLL_HOOK \
     do { \

@@ -27,7 +27,7 @@
 #include "objpin.h"
 
 
-STATIC const mp_map_elem_t pin_board_pins_locals_dict_table[] = {
+static const mp_map_elem_t pin_board_pins_locals_dict_table[] = {
     BOARD_PIN(P0_0),
     BOARD_PIN(P0_1),
     BOARD_PIN(P0_2),
