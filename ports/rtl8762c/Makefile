@@ -4,19 +4,21 @@ include ../../py/mkenv.mk
 # MicroPython feature configurations
 MICROPY_ROM_TEXT_COMPRESSION ?= 1
 
-# Include py core make definitions.
-include $(TOP)/py/py.mk
-include $(TOP)/extmod/extmod.mk
 RTLTOOL ?= ~/repos/rtltool/rtltool.py
 BOARD ?= EMB1082
 BOARD_DIR ?= boards/$(BOARD)
+FROZEN_MANIFEST ?= boards/manifest.py
+
+# Include board specific definitions.
+include $(BOARD_DIR)/mpconfigboard.mk
+
+# Include py core make definitions.
+include $(TOP)/py/py.mk
+include $(TOP)/extmod/extmod.mk
 
 ifeq ($(wildcard $(BOARD_DIR)/.),)
 $(error Invalid BOARD specified: $(BOARD))
 endif
-
-# Include board specific definitions.
-include $(BOARD_DIR)/board_config.mk
 
 CROSS_COMPILE ?= arm-none-eabi-
 
@@ -38,9 +40,9 @@ INC += $(addprefix -I,$(sort \
 ))
 
 # Set CFLAGS and libraries.
-CFLAGS += $(INC) -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=gnu17 $(COPT) -DFIRMWARE_SIZE=$(FIRMWARE_SIZE)
+CFLAGS += $(INC) -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=gnu17 $(COPT) -DFIRMWARE_SIZE=$(FIRMWARE_SIZE) -DFLASH_SIZE=$(FLASH_SIZE)
 CFLAGS += -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -fsingle-precision-constant
-LDFLAGS += -specs=nano.specs -T rtl8762c.ld -Wl,-Map=$@.map,--cref -Wl,--gc-sections -Wl,--defsym=FIRMWARE_SIZE=$(FIRMWARE_SIZE) $(CFLAGS)
+LDFLAGS += -specs=nano.specs -T rtl8762c.ld -Wl,-Map=$@.map,--cref -Wl,--gc-sections -Wl,--defsym=FIRMWARE_SIZE=$(FIRMWARE_SIZE) -Wl,--defsym=FLASH_SIZE=$(FLASH_SIZE) $(CFLAGS)
 LIBS += -lc -lm -lnosys sdk/bin/rom_symbol_gcc.axf $(wildcard ./sdk/bin/*.a)
 SRC_S = sdk/src/mcu/rtl876x/arm/startup_rtl8762c_gcc.s
 
@@ -67,6 +69,7 @@ SRC_C += \
 	$(BOARD_DIR)/pins.c \
 
 SRC_MOD += \
+	mp_helper/mods/modrtl.c \
 	mp_helper/mods/machine/objpin.c \
 
 SRC_C += $(SRC_MOD)

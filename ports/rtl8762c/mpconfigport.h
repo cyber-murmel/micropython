@@ -7,13 +7,18 @@
 #include "mpconfigboard.h"
 
 // Python internal features.
-#define MICROPY_ENABLE_GC                       (1)
-#define MICROPY_HELPER_REPL                     (1)
-#define MICROPY_ERROR_REPORTING                 (MICROPY_ERROR_REPORTING_TERSE)
-#define MICROPY_FLOAT_IMPL                      (MICROPY_FLOAT_IMPL_FLOAT)
+#define MICROPY_ENABLE_GC           (1)
+#define MICROPY_HELPER_REPL         (1)
+#define MICROPY_ERROR_REPORTING     (MICROPY_ERROR_REPORTING_TERSE)
+#define MICROPY_FLOAT_IMPL          (MICROPY_FLOAT_IMPL_FLOAT)
+#define MICROPY_LONGINT_IMPL        (MICROPY_LONGINT_IMPL_MPZ)
+#define MICROPY_VFS                 (1)
+#define MICROPY_READER_VFS          (MICROPY_VFS)
+#define MICROPY_ENABLE_FINALISER    (MICROPY_READER_VFS)
 
 // Fine control over Python builtins, classes, modules, etc.
-#define MICROPY_PY_TIME (1)
+#define MICROPY_PY_OS               (1)
+#define MICROPY_PY_TIME             (1)
 
 // extended modules
 #define MICROPY_PY_MACHINE          (1)
