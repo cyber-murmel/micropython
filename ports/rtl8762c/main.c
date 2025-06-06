@@ -53,17 +53,40 @@ static void micropython_task(void *p_param) {
     // Initialise the MicroPython runtime.
     mp_stack_ctrl_init();
     gc_init(heap, heap + sizeof(heap));
-    mp_init();
 
-    // initialise peripherals
-    machine_pins_init();
+    for(;;) {
+        mp_init();
 
-    // Start a normal REPL; will exit when ctrl-D is entered on a blank line.
-    pyexec_friendly_repl();
+        // initialise peripherals
+        machine_pins_init();
 
-    // Deinitialise the runtime.
-    gc_sweep_all();
-    mp_deinit();
+        #if MICROPY_MODULE_FROZEN
+        pyexec_frozen_module("_boot.py", false);
+        #endif
+
+        pyexec_file_if_exists("boot.py");
+        if (pyexec_mode_kind == PYEXEC_MODE_FRIENDLY_REPL) {
+            pyexec_file_if_exists("main.py");
+        }
+
+        for (;;) {
+            if (pyexec_mode_kind == PYEXEC_MODE_RAW_REPL) {
+                // vprintf_like_t vprintf_log = esp_log_set_vprintf(vprintf_null);
+                if (pyexec_raw_repl() != 0) {
+                    break;
+                }
+                // esp_log_set_vprintf(vprintf_log);
+            } else {
+                if (pyexec_friendly_repl() != 0) {
+                    break;
+                }
+            }
+        }
+
+        // Deinitialise the runtime.
+        gc_sweep_all();
+        mp_deinit();
+    }
 }
 
 int main(int argc, char **argv) {
