@@ -35,6 +35,10 @@ INC += $(addprefix -I,$(sort \
 	sdk/inc/platform/ \
 	sdk/inc/platform/cmsis/ \
 	sdk/inc/peripheral/ \
+	sdk/inc/bluetooth/profile/ \
+	sdk/inc/bluetooth/profile/server/ \
+	sdk/inc/bluetooth/gap/ \
+	sdk/src/ble/privacy/ \
 	sdk/inc/os/ \
 	sdk/inc/app/ \
 ))
@@ -66,11 +70,22 @@ SRC_C += \
 	sdk/src/mcu/peripheral/rtl876x_rcc.c \
 	sdk/src/mcu/peripheral/rtl876x_uart.c \
 	sdk/src/mcu/peripheral/rtl876x_gpio.c \
+    sdk/src/ble/privacy/privacy_mgnt.c \
+    sdk/src/platform/os_msg.c \
+    sdk/src/ble/profile/server/bas.c \
+    sdk/src/ble/profile/server/dis.c \
+    sdk/src/ble/profile/server/simple_ble_service.c \
+	BLE/BLE.c \
+	BLE/Peripheral.c \
+	BLE/Services/OTAService.c \
 	$(BOARD_DIR)/pins.c \
+    # sdk/src/ble/profile/server/rcu_ota_service.c \
+	# shared/readline/readline.c \
 
 SRC_MOD += \
 	mp_helper/mods/modrtl.c \
 	mp_helper/mods/machine/objpin.c \
+	mp_helper/mods/modbluetooth_rtl.c \
 
 SRC_C += $(SRC_MOD)
 

@@ -15,9 +15,13 @@
 #define MICROPY_VFS                 (1)
 #define MICROPY_READER_VFS          (MICROPY_VFS)
 #define MICROPY_ENABLE_FINALISER    (MICROPY_READER_VFS)
+#define MICROPY_ENABLE_SCHEDULER    (1)
+#define MICROPY_SCHEDULER_DEPTH     (8)
+#define MICROPY_PY_BUILTINS_MEMORYVIEW (1)
 
 // Fine control over Python builtins, classes, modules, etc.
 #define MICROPY_PY_OS               (1)
+#define MICROPY_PY_BLUETOOTH        (1)
 #define MICROPY_PY_TIME             (1)
 
 // extended modules
