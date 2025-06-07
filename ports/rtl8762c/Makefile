@@ -66,6 +66,7 @@ SRC_C += \
 	shared/runtime/gchelper_generic.c \
 	shared/runtime/pyexec.c \
 	shared/runtime/stdout_helpers.c \
+	shared/runtime/interrupt_char.c \
 	sdk/src/mcu/rtl876x/system_rtl8762c.c \
 	sdk/src/mcu/peripheral/rtl876x_rcc.c \
 	sdk/src/mcu/peripheral/rtl876x_uart.c \
