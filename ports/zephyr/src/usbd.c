@@ -28,6 +28,7 @@
 #include <zephyr/device.h>
 #include <zephyr/usb/usbd.h>
 #include <zephyr/usb/bos.h>
+#include <zephyr/usb/class/usbd_msc.h>
 
 #if defined(CONFIG_USB_DEVICE_STACK_NEXT)
 
@@ -61,6 +62,14 @@ USBD_DESC_SERIAL_NUMBER_DEFINE(mp_sn);
 
 USBD_DESC_CONFIG_DEFINE(fs_cfg_desc, "FS Configuration");
 USBD_DESC_CONFIG_DEFINE(hs_cfg_desc, "HS Configuration");
+
+#if CONFIG_DISK_DRIVER_FLASH
+USBD_DEFINE_MSC_LUN(flash, "FLASH", "Zephyr", "Flash", "0.00");
+#endif
+
+#if CONFIG_DISK_DRIVER_SDMMC || CONFIG_DISK_DRIVER_MMC
+USBD_DEFINE_MSC_LUN(sd, "SD", "Zephyr", "SD", "0.00");
+#endif
 
 /* not self-powered, no remote wakeup  */
 static const uint8_t attributes = 0;

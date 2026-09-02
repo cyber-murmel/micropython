@@ -100,6 +100,17 @@ static __noinit char heap[MICROPY_HEAP_SIZE];
 extern int mp_usbd_init(void);
 #endif // defined(CONFIG_USB_DEVICE_STACK_NEXT)
 
+#ifdef CONFIG_EXCEPTION_DUMP_HOOK
+#include <zephyr/arch/exception.h>
+
+static void dump_hook(const char *format, va_list args) {
+    /* this is a crude hack to work around a crash while not dumping evey syscall */
+    ARG_UNUSED(format);
+    ARG_UNUSED(args);
+    printk("%s", "");
+}
+#endif
+
 void init_zephyr(void) {
     // We now rely on CONFIG_NET_APP_SETTINGS to set up bootstrap
     // network addresses.
@@ -124,6 +135,9 @@ void init_zephyr(void) {
     static struct in6_addr in6addr_my = {{{0x20, 0x01, 0x0d, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}}};
     net_if_ipv6_addr_add(net_if_get_default(), &in6addr_my, NET_ADDR_MANUAL, 0);
     #endif
+    #endif
+    #ifdef CONFIG_EXCEPTION_DUMP_HOOK
+    arch_exception_set_dump_hook(dump_hook, NULL);
     #endif
 }
 
@@ -152,6 +166,9 @@ soft_reset:
     gc_init(heap, heap + sizeof(heap));
     #if MICROPY_GC_SPLIT_HEAP && DT_HAS_COMPAT_STATUS_OKAY(micropython_heap)
     DT_FOREACH_STATUS_OKAY(micropython_heap, MICROPY_HEAP_ADD)
+    #endif
+    #if MICROPY_GC_ALLOC_THRESHOLD
+    MP_STATE_MEM(gc_alloc_threshold) = sizeof(heap)/8;
     #endif
     #endif
     mp_init();
@@ -223,15 +240,6 @@ soft_reset_exit:
     goto soft_reset;
 
     return 0;
-}
-
-void gc_collect(void) {
-    gc_collect_start();
-    gc_helper_collect_regs_and_stack();
-    #if MICROPY_PY_THREAD
-    mp_thread_gc_others();
-    #endif
-    gc_collect_end();
 }
 
 #if !MICROPY_READER_VFS

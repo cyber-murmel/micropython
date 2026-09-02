@@ -1,0 +1,4 @@
+name: micropython
+build:
+  cmake: zephyr
+  kconfig: zephyr/Kconfig

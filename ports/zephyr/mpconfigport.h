@@ -4,6 +4,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2016 Linaro Limited
+ * Copyright (c) 2026 marble
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -129,6 +130,34 @@
 #define MICROPY_ENABLE_SCHEDULER    (1)
 #define MICROPY_VFS                 (1)
 #define MICROPY_READER_VFS          (MICROPY_VFS)
+
+#define MICROPY_PY_ASYNC_AWAIT                  (1)
+#define MICROPY_PY_ASYNCIO                      (1)
+#define MICROPY_PY_BUILTINS_INPUT               (1)
+#define MICROPY_PY_FSTRINGS                     (1)
+#define MICROPY_PY_JSON                         (1)
+#define MICROPY_PY_RANDOM                       (1)
+#define MICROPY_PY_RANDOM_EXTRA_FUNCS           (MICROPY_PY_RANDOM)
+#define MICROPY_PY_RE                           (1)
+#define MICROPY_PY_SELECT                       (MICROPY_PY_ASYNCIO)
+
+#if CONFIG_IDF_TARGET_ARCH_XTENSA
+#define MICROPY_NLR_SETJMP (1)
+#endif
+
+#ifndef MICROPY_BOARD_ENTER_BOOTLOADER
+// RTC has a register to trigger bootloader on these targets
+#if CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32P4
+#define MICROPY_ESP32_USE_BOOTLOADER_RTC    (1)
+#define MICROPY_BOARD_ENTER_BOOTLOADER(nargs, args) machine_bootloader_rtc()
+#endif
+#endif
+
+#ifdef MICROPY_BOARD_ENTER_BOOTLOADER
+#define MICROPY_PY_MACHINE_BOOTLOADER       (1)
+#else
+#define MICROPY_PY_MACHINE_BOOTLOADER       (0)
+#endif
 
 #if defined(CONFIG_RISCV_ISA_RV32I) && defined(CONFIG_RISCV_ISA_EXT_M) && defined(CONFIG_RISCV_ISA_EXT_C)
 
