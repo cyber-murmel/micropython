@@ -22,12 +22,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.20.0)
+# Built either as the application itself, or from the micropython Zephyr module
+# (zephyr/CMakeLists.txt) for an application that enables CONFIG_MICROPYTHON.
+if(NOT ZEPHYR_CURRENT_MODULE_DIR)
+    cmake_minimum_required(VERSION 3.20.0)
 
-find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
-project(micropython)
+    find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+    project(micropython)
+endif()
 
-set(MICROPY_PORT_DIR    ${CMAKE_CURRENT_SOURCE_DIR})
+set(MICROPY_PORT_DIR    ${CMAKE_CURRENT_LIST_DIR})
 set(MICROPY_DIR         ${MICROPY_PORT_DIR}/../..)
 set(MICROPY_TARGET      micropython)
 string(TOUPPER          ZEPHYR_${BOARD} MICROPY_BOARD)
@@ -38,13 +42,13 @@ include(${MICROPY_DIR}/extmod/extmod.cmake)
 # Resolve MICROPY_FROZEN_MANIFEST before usermod.cmake (and thus
 # py/manifest.cmake) runs, so c_module() entries in the manifest are picked up.
 if (CONFIG_MICROPY_FROZEN_MODULES)
-    cmake_path(ABSOLUTE_PATH CONFIG_MICROPY_FROZEN_MANIFEST BASE_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+    cmake_path(ABSOLUTE_PATH CONFIG_MICROPY_FROZEN_MANIFEST BASE_DIRECTORY ${APPLICATION_SOURCE_DIR})
     set(MICROPY_FROZEN_MANIFEST ${CONFIG_MICROPY_FROZEN_MANIFEST})
 endif()
 
-include(${MICROPY_DIR}/py/usermod.cmake)
+# include(${MICROPY_DIR}/py/usermod.cmake)
 
-list(APPEND DTS_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/dts)
+list(APPEND DTS_ROOT ${CMAKE_CURRENT_LIST_DIR}/dts)
 
 # Define mpy-cross flags, for use with frozen code.
 if(CONFIG_RISCV_ISA_RV32I AND CONFIG_RISCV_ISA_EXT_M AND CONFIG_RISCV_ISA_EXT_C)
@@ -67,6 +71,7 @@ endif()
 
 set(MICROPY_SOURCE_PORT
     main.c
+    gccollect.c
     help.c
     machine_i2c.c
     machine_spi.c
@@ -78,17 +83,23 @@ set(MICROPY_SOURCE_PORT
     modzsensor.c
     mphalport.c
     uart_core.c
+    usb.c
     zephyr_device.c
     zephyr_storage.c
     zephyr_filesystem.c
     mpthreadport.c
 )
 list(TRANSFORM MICROPY_SOURCE_PORT PREPEND ${MICROPY_PORT_DIR}/)
+if(CONFIG_LVGL)
+list(APPEND MICROPY_SOURCE_PORT
+    ${ZEPHYR_LV_BINDING_MICROPYTHON_MODULE_DIR}/driver/zephyr/modlvzephyr.c
+    ${ZEPHYR_LVGL_MODULE_DIR}/src/stdlib/micropython/lv_mem_core_micropython.c
+)
+endif()
 
 set(MICROPY_SOURCE_SHARED
     libc/printf.c
     readline/readline.c
-    runtime/gchelper_generic.c
     runtime/interrupt_char.c
     runtime/mpirq.c
     runtime/pyexec.c
@@ -96,6 +107,11 @@ set(MICROPY_SOURCE_SHARED
     runtime/sys_stdio_mphal.c
     timeutils/timeutils.c
 )
+if (NOT CONFIG_IDF_TARGET_ARCH_XTENSA)
+list(APPEND MICROPY_SOURCE_SHARED
+    runtime/gchelper_generic.c
+)
+endif()
 list(TRANSFORM MICROPY_SOURCE_SHARED PREPEND ${MICROPY_DIR}/shared/)
 
 set(MICROPY_SOURCE_DRIVERS
@@ -136,6 +152,44 @@ endif()
 
 list(TRANSFORM MICROPY_SOURCE_LIB PREPEND ${MICROPY_DIR}/lib/)
 
+# Include directories and definitions are read from zephyr_interface at generate time: as a
+# Zephyr module, this is configured before later modules (e.g. lvgl) and the application add theirs.
+set(zephyr_includes $<TARGET_PROPERTY:zephyr_interface,INTERFACE_INCLUDE_DIRECTORIES>)
+set(zephyr_system_includes $<TARGET_PROPERTY:zephyr_interface,INTERFACE_SYSTEM_INCLUDE_DIRECTORIES>)
+set(zephyr_definitions $<TARGET_PROPERTY:zephyr_interface,INTERFACE_COMPILE_DEFINITIONS>)
+set(includes "-I$<JOIN:${zephyr_includes},$<SEMICOLON>-I>")
+set(system_includes "$<$<BOOL:${zephyr_system_includes}>:-isystem$<JOIN:${zephyr_system_includes},$<SEMICOLON>-isystem>>")
+set(definitions "-D$<JOIN:${zephyr_definitions},$<SEMICOLON>-D>")
+zephyr_get_compile_options_for_lang(C options)
+
+set(MICROPY_CPP_FLAGS_EXTRA ${includes} ${system_includes} ${definitions} ${options})
+
+if(CONFIG_LVGL)
+set(LVGL_DIR "${ZEPHYR_LVGL_MODULE_DIR}")
+# set(LVGL_ROOT_DIR "${ZEPHYR_LVGL_MODULE_DIR}")
+set(LV_INCLUDE ${ZEPHYR_BASE}/modules/lvgl/include/)
+set(LV_CONF_PATH ${LV_INCLUDE}/lv_conf.h)
+set(LV_CFLAGS ${includes} ${system_includes} ${options} "-DLV_CONF_PATH=\"${LV_CONF_PATH}\"" "-D__attribute__(x)=")
+set(MICROPY_MANIFEST_LV_BINDING_MICROPYTHON_DIR ${ZEPHYR_LV_BINDING_MICROPYTHON_MODULE_DIR})
+list(APPEND USER_C_MODULES "${ZEPHYR_LV_BINDING_MICROPYTHON_MODULE_DIR}/bindings.cmake")
+endif()
+
+# After the LVGL binding has joined USER_C_MODULES.
+include(${MICROPY_DIR}/py/usermod.cmake)
+
+if(CONFIG_LVGL)
+# The binding pulls LVGL's own sources in through lvgl_interface: Zephyr builds them as its
+# lvgl library.
+list(FILTER MICROPY_SOURCE_USERMOD EXCLUDE REGEX "^${ZEPHYR_LVGL_MODULE_DIR}/src/")
+# The user C modules' include directories are known from here on.
+target_include_directories(app PRIVATE
+    ${MICROPY_INC_CORE}
+    ${MICROPY_PORT_DIR}
+    ${MICROPY_INC_USERMOD}
+    ${CMAKE_BINARY_DIR}
+)
+endif()
+
 set(MICROPY_SOURCE_QSTR
     ${MICROPY_SOURCE_PY}
     ${MICROPY_SOURCE_EXTMOD}
@@ -146,20 +200,14 @@ set(MICROPY_SOURCE_QSTR
     ${MICROPY_SOURCE_PORT}
 )
 
-zephyr_get_include_directories_for_lang(C includes)
-zephyr_get_system_include_directories_for_lang(C system_includes)
-zephyr_get_compile_definitions_for_lang(C definitions)
-zephyr_get_compile_options_for_lang(C options)
-
-set(MICROPY_CPP_FLAGS_EXTRA ${includes} ${system_includes} ${definitions} ${options})
-
 zephyr_library_named(${MICROPY_TARGET})
 
 zephyr_library_include_directories(
     ${MICROPY_INC_CORE}
     ${MICROPY_PORT_DIR}
     ${MICROPY_INC_USERMOD}
-    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_BINARY_DIR}
+    ${ZEPHYR_LV_BINDING_MICROPYTHON_MODULE_DIR}
 )
 
 zephyr_library_compile_options(
@@ -185,8 +233,8 @@ add_dependencies(BUILD_VERSION_HEADER zephyr_generated_headers)
 add_dependencies(${MICROPY_TARGET} zephyr_generated_headers)
 
 target_sources(app PRIVATE
-    src/zephyr_getchar.c
-    src/usbd.c
+    ${MICROPY_PORT_DIR}/src/zephyr_getchar.c
+    ${MICROPY_PORT_DIR}/src/usbd.c
 )
 
 target_link_libraries(app PRIVATE ${MICROPY_TARGET})
