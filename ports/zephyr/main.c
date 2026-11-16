@@ -225,15 +225,6 @@ soft_reset_exit:
     return 0;
 }
 
-void gc_collect(void) {
-    gc_collect_start();
-    gc_helper_collect_regs_and_stack();
-    #if MICROPY_PY_THREAD
-    mp_thread_gc_others();
-    #endif
-    gc_collect_end();
-}
-
 #if !MICROPY_READER_VFS
 mp_lexer_t *mp_lexer_new_from_file(qstr filename) {
     mp_raise_OSError(ENOENT);

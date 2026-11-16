@@ -141,6 +141,10 @@
 #define MICROPY_PY_RE                           (1)
 #define MICROPY_PY_SELECT                       (MICROPY_PY_ASYNCIO)
 
+#if CONFIG_IDF_TARGET_ARCH_XTENSA
+#define MICROPY_NLR_SETJMP (1)
+#endif
+
 #if defined(CONFIG_RISCV_ISA_RV32I) && defined(CONFIG_RISCV_ISA_EXT_M) && defined(CONFIG_RISCV_ISA_EXT_C)
 
 #ifndef MICROPY_EMIT_RV32

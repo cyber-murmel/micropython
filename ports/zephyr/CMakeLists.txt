@@ -67,6 +67,7 @@ endif()
 
 set(MICROPY_SOURCE_PORT
     main.c
+    gccollect.c
     help.c
     machine_i2c.c
     machine_spi.c
@@ -88,7 +89,6 @@ list(TRANSFORM MICROPY_SOURCE_PORT PREPEND ${MICROPY_PORT_DIR}/)
 set(MICROPY_SOURCE_SHARED
     libc/printf.c
     readline/readline.c
-    runtime/gchelper_generic.c
     runtime/interrupt_char.c
     runtime/mpirq.c
     runtime/pyexec.c
@@ -96,6 +96,11 @@ set(MICROPY_SOURCE_SHARED
     runtime/sys_stdio_mphal.c
     timeutils/timeutils.c
 )
+if (NOT CONFIG_IDF_TARGET_ARCH_XTENSA)
+list(APPEND MICROPY_SOURCE_SHARED
+    runtime/gchelper_generic.c
+)
+endif()
 list(TRANSFORM MICROPY_SOURCE_SHARED PREPEND ${MICROPY_DIR}/shared/)
 
 set(MICROPY_SOURCE_DRIVERS
