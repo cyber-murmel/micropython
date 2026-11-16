@@ -46,7 +46,7 @@ if (CONFIG_MICROPY_FROZEN_MODULES)
     set(MICROPY_FROZEN_MANIFEST ${CONFIG_MICROPY_FROZEN_MANIFEST})
 endif()
 
-include(${MICROPY_DIR}/py/usermod.cmake)
+# include(${MICROPY_DIR}/py/usermod.cmake)
 
 list(APPEND DTS_ROOT ${CMAKE_CURRENT_LIST_DIR}/dts)
 
@@ -90,6 +90,12 @@ set(MICROPY_SOURCE_PORT
     mpthreadport.c
 )
 list(TRANSFORM MICROPY_SOURCE_PORT PREPEND ${MICROPY_PORT_DIR}/)
+if(CONFIG_LVGL)
+list(APPEND MICROPY_SOURCE_PORT
+    ${ZEPHYR_LV_BINDING_MICROPYTHON_MODULE_DIR}/driver/zephyr/modlvzephyr.c
+    ${ZEPHYR_LVGL_MODULE_DIR}/src/stdlib/micropython/lv_mem_core_micropython.c
+)
+endif()
 
 set(MICROPY_SOURCE_SHARED
     libc/printf.c
@@ -158,6 +164,32 @@ zephyr_get_compile_options_for_lang(C options)
 
 set(MICROPY_CPP_FLAGS_EXTRA ${includes} ${system_includes} ${definitions} ${options})
 
+if(CONFIG_LVGL)
+set(LVGL_DIR "${ZEPHYR_LVGL_MODULE_DIR}")
+# set(LVGL_ROOT_DIR "${ZEPHYR_LVGL_MODULE_DIR}")
+set(LV_INCLUDE ${ZEPHYR_BASE}/modules/lvgl/include/)
+set(LV_CONF_PATH ${LV_INCLUDE}/lv_conf.h)
+set(LV_CFLAGS ${includes} ${system_includes} ${options} "-DLV_CONF_PATH=\"${LV_CONF_PATH}\"" "-D__attribute__(x)=")
+set(MICROPY_MANIFEST_LV_BINDING_MICROPYTHON_DIR ${ZEPHYR_LV_BINDING_MICROPYTHON_MODULE_DIR})
+list(APPEND USER_C_MODULES "${ZEPHYR_LV_BINDING_MICROPYTHON_MODULE_DIR}/bindings.cmake")
+endif()
+
+# After the LVGL binding has joined USER_C_MODULES.
+include(${MICROPY_DIR}/py/usermod.cmake)
+
+if(CONFIG_LVGL)
+# The binding pulls LVGL's own sources in through lvgl_interface: Zephyr builds them as its
+# lvgl library.
+list(FILTER MICROPY_SOURCE_USERMOD EXCLUDE REGEX "^${ZEPHYR_LVGL_MODULE_DIR}/src/")
+# The user C modules' include directories are known from here on.
+target_include_directories(app PRIVATE
+    ${MICROPY_INC_CORE}
+    ${MICROPY_PORT_DIR}
+    ${MICROPY_INC_USERMOD}
+    ${CMAKE_BINARY_DIR}
+)
+endif()
+
 set(MICROPY_SOURCE_QSTR
     ${MICROPY_SOURCE_PY}
     ${MICROPY_SOURCE_EXTMOD}
@@ -175,6 +207,7 @@ zephyr_library_include_directories(
     ${MICROPY_PORT_DIR}
     ${MICROPY_INC_USERMOD}
     ${CMAKE_BINARY_DIR}
+    ${ZEPHYR_LV_BINDING_MICROPYTHON_MODULE_DIR}
 )
 
 zephyr_library_compile_options(
