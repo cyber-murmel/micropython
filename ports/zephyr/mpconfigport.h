@@ -4,6 +4,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2016 Linaro Limited
+ * Copyright (c) 2026 marble
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -129,6 +130,16 @@
 #define MICROPY_ENABLE_SCHEDULER    (1)
 #define MICROPY_VFS                 (1)
 #define MICROPY_READER_VFS          (MICROPY_VFS)
+
+#define MICROPY_PY_ASYNC_AWAIT                  (1)
+#define MICROPY_PY_ASYNCIO                      (1)
+#define MICROPY_PY_BUILTINS_INPUT               (1)
+#define MICROPY_PY_FSTRINGS                     (1)
+#define MICROPY_PY_JSON                         (1)
+#define MICROPY_PY_RANDOM                       (1)
+#define MICROPY_PY_RANDOM_EXTRA_FUNCS           (MICROPY_PY_RANDOM)
+#define MICROPY_PY_RE                           (1)
+#define MICROPY_PY_SELECT                       (MICROPY_PY_ASYNCIO)
 
 #if defined(CONFIG_RISCV_ISA_RV32I) && defined(CONFIG_RISCV_ISA_EXT_M) && defined(CONFIG_RISCV_ISA_EXT_C)
 
