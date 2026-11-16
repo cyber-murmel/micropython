@@ -153,6 +153,9 @@ soft_reset:
     #if MICROPY_GC_SPLIT_HEAP && DT_HAS_COMPAT_STATUS_OKAY(micropython_heap)
     DT_FOREACH_STATUS_OKAY(micropython_heap, MICROPY_HEAP_ADD)
     #endif
+    #if MICROPY_GC_ALLOC_THRESHOLD
+    MP_STATE_MEM(gc_alloc_threshold) = sizeof(heap)/8;
+    #endif
     #endif
     mp_init();
 
