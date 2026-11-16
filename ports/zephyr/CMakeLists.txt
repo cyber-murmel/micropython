@@ -79,6 +79,7 @@ set(MICROPY_SOURCE_PORT
     modzsensor.c
     mphalport.c
     uart_core.c
+    usb.c
     zephyr_device.c
     zephyr_storage.c
     zephyr_filesystem.c

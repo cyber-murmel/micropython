@@ -145,6 +145,20 @@
 #define MICROPY_NLR_SETJMP (1)
 #endif
 
+#ifndef MICROPY_BOARD_ENTER_BOOTLOADER
+// RTC has a register to trigger bootloader on these targets
+#if CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32P4
+#define MICROPY_ESP32_USE_BOOTLOADER_RTC    (1)
+#define MICROPY_BOARD_ENTER_BOOTLOADER(nargs, args) machine_bootloader_rtc()
+#endif
+#endif
+
+#ifdef MICROPY_BOARD_ENTER_BOOTLOADER
+#define MICROPY_PY_MACHINE_BOOTLOADER       (1)
+#else
+#define MICROPY_PY_MACHINE_BOOTLOADER       (0)
+#endif
+
 #if defined(CONFIG_RISCV_ISA_RV32I) && defined(CONFIG_RISCV_ISA_EXT_M) && defined(CONFIG_RISCV_ISA_EXT_C)
 
 #ifndef MICROPY_EMIT_RV32
